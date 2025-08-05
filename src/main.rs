@@ -15,6 +15,7 @@ use anyhow::Result;
 use clap::Parser;
 
 mod cli;
+mod config;
 mod git;
 mod llm;
 mod changelog;
@@ -34,6 +35,9 @@ async fn main() -> Result<()> {
         }
         Commands::Changelog(args) => {
             cli::handle_changelog(args).await?;
+        }
+        Commands::Config(args) => {
+            cli::handle_config(args).await?;
         }
     }
 

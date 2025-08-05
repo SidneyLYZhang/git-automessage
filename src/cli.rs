@@ -30,6 +30,8 @@ pub enum Commands {
     Tag(TagArgs),
     /// Generate and append changelog for recent commits
     Changelog(ChangelogArgs),
+    /// Configuration management
+    Config(ConfigArgs),
 }
 
 #[derive(Args)]
@@ -82,6 +84,21 @@ pub struct ChangelogArgs {
     /// Tag range for changelog (e.g., v1.0.0..v1.1.0)
     #[arg(long)]
     pub range: Option<String>,
+}
+
+#[derive(Args)]
+pub struct ConfigArgs {
+    /// Initialize configuration file with default values
+    #[arg(long)]
+    pub init: bool,
+    
+    /// Show current configuration file path
+    #[arg(long)]
+    pub path: bool,
+    
+    /// Validate current configuration
+    #[arg(long)]
+    pub validate: bool,
 }
 
 pub async fn handle_commit(args: CommitArgs) -> Result<()> {
@@ -149,6 +166,39 @@ pub async fn handle_changelog(args: ChangelogArgs) -> Result<()> {
         println!("Changelog written to {}", output_path);
     } else {
         println!("Generated changelog:\n{}\n", changelog);
+    }
+    
+    Ok(())
+}
+
+pub async fn handle_config(args: ConfigArgs) -> Result<()> {
+    use crate::config::Config;
+    
+    if args.init {
+        Config::create_config()?;
+    } else if args.path {
+        let config_path = Config::get_config_path()?;
+        println!("配置文件路径: {:?}", config_path);
+    } else if args.validate {
+        match Config::load() {
+            Ok(config) => {
+                match config.validate() {
+                    Ok(_) => println!("配置验证成功！"),
+                    Err(e) => println!("配置验证失败: {}", e),
+                }
+            }
+            Err(e) => println!("无法加载配置: {}", e),
+        }
+    } else {
+        // 默认显示配置信息
+        let config_path = Config::get_config_path()?;
+        println!("git-automessage 配置管理");
+        println!("配置文件路径: {:?}", config_path);
+        println!("");
+        println!("可用命令:");
+        println!("  git-automessage config --init      初始化配置文件");
+        println!("  git-automessage config --path      显示配置文件路径");
+        println!("  git-automessage config --validate  验证当前配置");
     }
     
     Ok(())

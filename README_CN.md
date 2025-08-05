@@ -1,5 +1,10 @@
 # Git AutoMessage
 
+![Rust](https://img.shields.io/badge/Rust-1.70+-red.svg)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+[【中文】](README_CN.md) [【English】](README.md)
+
 使用大语言模型的 AI 驱动的 git 提交和标签消息生成器。
 
 ## 功能特性

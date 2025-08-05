@@ -1,0 +1,27 @@
+# git-automessage 配置文件示例
+# 该文件应该保存在以下位置：
+# - Windows: %APPDATA%\git-automessage\config.yaml
+# - macOS: ~/Library/Application Support/git-automessage/config.yaml
+# - Linux: ~/.config/git-automessage/config.yaml
+
+# LLM配置
+llm:
+  # API基础URL
+  base_url: "https://api.openai.com/v1"
+  # API密钥（必填）
+  api_key: "your-api-key-here"
+  # 使用的模型名称
+  model: "gpt-3.5-turbo"
+
+# 用户界面语言
+language: "zh"
+
+# 个性化prompt模板
+prompt: |
+  根据以下git变更生成一个简洁明了的提交消息。
+  要求：
+  1. 使用中文
+  2. 遵循常规的提交消息格式
+  3. 准确描述变更内容
+  变更内容：
+  {diff}

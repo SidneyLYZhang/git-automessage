@@ -1,5 +1,10 @@
 # Git AutoMessage
 
+![Rust](https://img.shields.io/badge/Rust-1.70+-red.svg)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+[【中文】](README_CN.md) [【English】](README.md)
+
 AI-powered git commit and tag message generator using Large Language Models.
 
 ## Features
@@ -13,13 +18,15 @@ AI-powered git commit and tag message generator using Large Language Models.
 
 ## Installation
 
-### Prerequisites
+### Build from source
+
+#### Prerequisites
 
 - Rust 1.70 or higher
 - Git repository
 - OpenAI API key
 
-### Build from source
+#### Build
 
 ```bash
 git clone <repository-url>
