@@ -19,6 +19,7 @@ use dirs::config_dir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMConfig {
+    pub provider: LLMProvider,
     pub base_url: String,
     pub api_key: String,
     pub model: String,
@@ -36,7 +37,7 @@ pub enum LLMProvider {
     OpenAI,
     DeepSeek,
     Kimi,
-    Claude,
+    Anthropic,
     Ollama,
     Custom,
 }
@@ -51,21 +52,25 @@ impl LLMProvider {
 
         match self {
             LLMProvider::OpenAI => LLMConfig {
+                provider: LLMProvider::OpenAI,
                 base_url: "https://api.openai.com/v1".to_string(),
                 api_key: api_key,
                 model: "gpt-3.5-turbo".to_string(),
             },
             LLMProvider::DeepSeek => LLMConfig {
+                provider: LLMProvider::DeepSeek,
                 base_url: "https://api.deepseek.cn/v1".to_string(),
                 api_key: api_key,
                 model: "deepseek-chat".to_string(),
             },
             LLMProvider::Kimi => LLMConfig {
+                provider: LLMProvider::Kimi,
                 base_url: "https://api.kimi.ai/v1".to_string(),
                 api_key: api_key,
                 model: "kimi-k2-0711-preview".to_string(),
             },
-            LLMProvider::Claude => LLMConfig {
+            LLMProvider::Anthropic => LLMConfig {
+                provider: LLMProvider::Anthropic,
                 base_url: "https://api.anthropic.com/v1".to_string(),
                 api_key: api_key,
                 model: "claude-3.5-sonnet".to_string(),
@@ -73,6 +78,7 @@ impl LLMProvider {
             LLMProvider::Ollama => {
                 let model = input_info("ollama model");
                 LLMConfig {
+                    provider: LLMProvider::Ollama,
                     base_url: "http://localhost:11434".to_string(),
                     api_key: api_key,
                     model: model,
@@ -82,6 +88,7 @@ impl LLMProvider {
                 let base_url = input_info("base url");
                 let model = input_info("model");
                 LLMConfig {
+                    provider: LLMProvider::Custom,
                     base_url: base_url,
                     api_key: api_key,
                     model: model,
@@ -95,7 +102,7 @@ impl LLMProvider {
             LLMProvider::OpenAI,
             LLMProvider::DeepSeek,
             LLMProvider::Kimi,
-            LLMProvider::Claude,
+            LLMProvider::Anthropic,
             LLMProvider::Ollama,
             LLMProvider::Custom,
         ]
@@ -110,7 +117,7 @@ impl LLMProvider {
             LLMProvider::OpenAI => "OpenAI",
             LLMProvider::DeepSeek => "DeepSeek",
             LLMProvider::Kimi => "Kimi",
-            LLMProvider::Claude => "Claude",
+            LLMProvider::Anthropic => "Anthropic",
             LLMProvider::Ollama => "Ollama",
             LLMProvider::Custom => "Custom",
         }
