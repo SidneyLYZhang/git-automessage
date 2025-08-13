@@ -17,13 +17,12 @@ use rig::client::CompletionClient;
 use rig::completion::Prompt;
 use std::time::Duration;
 use tokio::time::timeout;
-use crate::config::{Config, LLMProvider};
+use crate::config::Config;
 
 pub struct MessageGenerator {
     base_url: String,
     api_key: String,
     model: String,
-    provider: LLMProvider,
 }
 
 impl MessageGenerator {
@@ -34,7 +33,6 @@ impl MessageGenerator {
             base_url: config.llm.base_url.clone(),
             api_key: config.llm.api_key.clone(),
             model: config.llm.model.clone(),
-            provider: config.llm.provider,
         })
     }
 
@@ -43,7 +41,6 @@ impl MessageGenerator {
         prompt: &str,
     ) -> Result<String> {
         const MAX_RETRIES: u32 = 3;
-        const TIMEOUT_SECONDS: u64 = 30;
         
         let mut retries = 0;
         

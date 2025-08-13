@@ -15,10 +15,6 @@ use anyhow::{Context, Result};
 use git2::{Diff, DiffOptions, Repository, Signature};
 use std::path::Path;
 
-pub struct GitRepo {
-    repo: Repository,
-}
-
 #[derive(Debug)]
 pub struct StagedFile {
     pub path: String,
@@ -32,6 +28,10 @@ pub struct CommitInfo {
     pub author: String,
     pub date: String,
     pub files_changed: Vec<String>,
+}
+
+pub struct GitRepo {
+    repo: Repository,
 }
 
 impl GitRepo {
