@@ -25,11 +25,66 @@ pub struct LLMConfig {
     pub model: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
-    pub llm: LLMConfig,
-    pub language: String,
-    pub prompt: Option<String>,
+impl LLMConfig {
+    pub fn from_name(
+        name: &str,
+        base_url: Option<&str>,
+        api_key: Option<&str>,
+        model: Option<&str>,
+    ) -> Self {
+        let provider = match name {
+            "openai" => LLMProvider::OpenAI,
+            "deepseek" => LLMProvider::DeepSeek,
+            "kimi" => LLMProvider::Kimi,
+            "anthropic" => LLMProvider::Anthropic,
+            "ollama" => LLMProvider::Ollama,
+            _ => LLMProvider::OpenAI,
+        };
+        let base_url = match base_url {
+            Some(url) => url.to_string(),
+            None => {
+                match get_env_var("GAM_BASE_URL"){
+                    Some(_) => "ENV".to_string(),
+                    None => match name {
+                        "openai" | "deepseek" | "kimi" | "anthropic" | "ollama" => {
+                            "default_baseurl".to_string()
+                        },
+                        _ => {
+                            input_info("base url")
+                        }
+                    },
+                }
+            },
+        };
+        let api_key = match api_key {
+            Some(key) => key.to_string(),
+            None => {
+                match get_env_var("GAM_API_KEY"){
+                    Some(_) => "ENV".to_string(),
+                    None => {
+                        input_info("api key")
+                    }
+                }
+            },
+        };
+        let model = match model {
+            Some(model) => model.to_string(),
+            None => {
+                match get_env_var("GAM_MODEL"){
+                    Some(_) => "ENV".to_string(),
+                    None => {
+                        input_info("model")
+                    }
+                }
+            },
+        };
+        LLMConfig {
+            provider,
+            base_url,
+            api_key,
+            model,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
@@ -39,72 +94,16 @@ pub enum LLMProvider {
     Kimi,
     Anthropic,
     Ollama,
-    Custom,
 }
 
 impl LLMProvider {
-    pub fn get_provider_llm(&self) -> LLMConfig {
-        let api_key = if self == &LLMProvider::Custom {
-            "".to_string()
-        } else {
-            input_info("API KEY")
-        };
-
-        match self {
-            LLMProvider::OpenAI => LLMConfig {
-                provider: LLMProvider::OpenAI,
-                base_url: "https://api.openai.com/v1".to_string(),
-                api_key: api_key,
-                model: "gpt-3.5-turbo".to_string(),
-            },
-            LLMProvider::DeepSeek => LLMConfig {
-                provider: LLMProvider::DeepSeek,
-                base_url: "https://api.deepseek.cn/v1".to_string(),
-                api_key: api_key,
-                model: "deepseek-chat".to_string(),
-            },
-            LLMProvider::Kimi => LLMConfig {
-                provider: LLMProvider::Kimi,
-                base_url: "https://api.kimi.ai/v1".to_string(),
-                api_key: api_key,
-                model: "kimi-k2-0711-preview".to_string(),
-            },
-            LLMProvider::Anthropic => LLMConfig {
-                provider: LLMProvider::Anthropic,
-                base_url: "https://api.anthropic.com/v1".to_string(),
-                api_key: api_key,
-                model: "claude-3.5-sonnet".to_string(),
-            },
-            LLMProvider::Ollama => {
-                let model = input_info("ollama model");
-                LLMConfig {
-                    provider: LLMProvider::Ollama,
-                    base_url: "http://localhost:11434".to_string(),
-                    api_key: api_key,
-                    model: model,
-                }
-            },
-            LLMProvider::Custom => {
-                let base_url = input_info("base url");
-                let model = input_info("model");
-                LLMConfig {
-                    provider: LLMProvider::Custom,
-                    base_url: base_url,
-                    api_key: api_key,
-                    model: model,
-                }
-            },
-        }
-    }
-
     fn list_providers() -> Vec<LLMProvider> {
         vec![
             LLMProvider::OpenAI,
             LLMProvider::DeepSeek,
             LLMProvider::Kimi,
             LLMProvider::Anthropic,
-            LLMProvider::Ollama,
-            LLMProvider::Custom,
+            LLMProvider::Ollama
         ]
     }
 
@@ -119,31 +118,40 @@ impl LLMProvider {
             LLMProvider::Kimi => "Kimi",
             LLMProvider::Anthropic => "Anthropic",
             LLMProvider::Ollama => "Ollama",
-            LLMProvider::Custom => "Custom",
         }
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Config {
+    pub llm: LLMConfig,
+    pub language: String,
+    pub prompt: Option<String>,
+    pub emoji: bool,
+    pub multi_line: bool,
+}
+
 impl Default for Config {
     fn default() -> Self {
-        println!("请选择一个LLM提供商:");
+        println!("请选择一个LLM提供商(如需自定义请问输入custom):");
         for (i, provider) in LLMProvider::list_providers().iter().enumerate() {
             println!("{}. {}", i + 1, provider.get_name());
         }
         let provider_name = input_info("请输入提供商名称");
-        let provider = LLMProvider::from_name(&provider_name)
-                                                 .unwrap_or(LLMProvider::OpenAI);
-        Self::with_provider(provider)
+        let api_key = input_info("API Key");
+        Self::with_provider(&provider_name, &api_key)
     }
 }
 
 impl Config {
     /// 创建一个新的配置实例，指定LLM提供商
-    pub fn with_provider(provider: LLMProvider) -> Self {
+    pub fn with_provider(provider: &str, api_key: &str) -> Self {
         Self {
-            llm: provider.get_provider_llm(),
+            llm: LLMConfig::from_name(provider, None, Some(api_key), None),
             language: "zh-CN".to_string(),
             prompt: None,
+            emoji: false,
+            multi_line: false,
         }
     }
     /// 获取配置文件路径（根据操作系统）
@@ -155,6 +163,21 @@ impl Config {
             fs::create_dir_all(&config_dir)?;
         }
         Ok(config_dir.join("config.yaml"))
+    }
+
+    /// 设置配置项
+    pub fn set_config(&mut self, key: &str, value: &str) {
+        match key {
+            "llm.provider" => self.llm.provider = LLMProvider::from_name(value).unwrap(),
+            "llm.base_url" => self.llm.base_url = value.to_string(),
+            "llm.api_key" => self.llm.api_key = value.to_string(),
+            "llm.model" => self.llm.model = value.to_string(),
+            "language" => self.language = value.to_string(),
+            "prompt" => self.prompt = Some(value.to_string()),
+            "emoji" => self.emoji = value.parse().unwrap(),
+            "multi_line" => self.multi_line = value.parse().unwrap(),
+            _ => println!("Unknown key: {}", key),
+        }
     }
 
     /// 从配置文件加载配置
@@ -210,8 +233,14 @@ impl Config {
 
     /// 验证配置是否完整
     pub fn validate(&self) -> Result<()> {
-        if self.llm.api_key.is_empty() {
-            anyhow::bail!("API密钥不能为空，请在配置文件中设置llm.api_key");
+        match self.llm.api_key.as_str() {
+            "ENV" => {
+                if get_env_var("GAM_API_KEY").is_none() {
+                    anyhow::bail!("API Key不能为空");
+                }
+            },
+            "" => anyhow::bail!("API Key不能为空"),
+            _ => {}
         }
         
         if self.llm.base_url.is_empty() {
@@ -231,4 +260,11 @@ fn input_info(info: &str) -> String {
     println!("Please input {}:", info);
     std::io::stdin().read_line(&mut txt).expect("failed to read line");
     txt.trim().to_string()
+}
+
+fn get_env_var(var_name: &str) -> Option<String> {
+    match std::env::var(var_name) {
+        Ok(value) => Some(value),
+        Err(_) => None,
+    }
 }

@@ -11,6 +11,8 @@
 //
 // Message generator using llm
 
+use rig::prelude::*;
+
 use anyhow::{Context, Result};
 use rig::{agent::AgentBuilder, providers::openai};
 use rig::client::CompletionClient;
@@ -18,11 +20,11 @@ use rig::completion::Prompt;
 use std::time::Duration;
 use tokio::time::timeout;
 use crate::config::Config;
+use crate::config::LLMConfig;
 
 pub struct MessageGenerator {
-    base_url: String,
-    api_key: String,
-    model: String,
+    model: LLMConfig,
+    prompt: String,
 }
 
 impl MessageGenerator {
