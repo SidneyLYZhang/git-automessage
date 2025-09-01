@@ -11,11 +11,11 @@
 //
 // configuration
 
+use anyhow::{Context, Result};
+use dirs::config_dir;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use anyhow::{Context, Result};
-use dirs::config_dir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMConfig {
@@ -42,40 +42,28 @@ impl LLMConfig {
         };
         let base_url = match base_url {
             Some(url) => url.to_string(),
-            None => {
-                match get_env_var("GAM_BASE_URL"){
-                    Some(_) => "ENV".to_string(),
-                    None => match name {
-                        "openai" | "deepseek" | "kimi" | "anthropic" | "ollama" => {
-                            "default_baseurl".to_string()
-                        },
-                        _ => {
-                            input_info("base url")
-                        }
-                    },
-                }
+            None => match get_env_var("GAM_BASE_URL") {
+                Some(_) => "ENV".to_string(),
+                None => match name {
+                    "openai" | "deepseek" | "kimi" | "anthropic" | "ollama" => {
+                        "default_baseurl".to_string()
+                    }
+                    _ => input_info("base url"),
+                },
             },
         };
         let api_key = match api_key {
             Some(key) => key.to_string(),
-            None => {
-                match get_env_var("GAM_API_KEY"){
-                    Some(_) => "ENV".to_string(),
-                    None => {
-                        input_info("api key")
-                    }
-                }
+            None => match get_env_var("GAM_API_KEY") {
+                Some(_) => "ENV".to_string(),
+                None => input_info("api key"),
             },
         };
         let model = match model {
             Some(model) => model.to_string(),
-            None => {
-                match get_env_var("GAM_MODEL"){
-                    Some(_) => "ENV".to_string(),
-                    None => {
-                        input_info("model")
-                    }
-                }
+            None => match get_env_var("GAM_MODEL") {
+                Some(_) => "ENV".to_string(),
+                None => input_info("model"),
             },
         };
         LLMConfig {
@@ -103,12 +91,15 @@ impl LLMProvider {
             LLMProvider::DeepSeek,
             LLMProvider::Kimi,
             LLMProvider::Anthropic,
-            LLMProvider::Ollama
+            LLMProvider::Ollama,
         ]
     }
 
     fn from_name(name: &str) -> Option<LLMProvider> {
-        Self::list_providers().iter().find(|&&provider| provider.get_name() == name).cloned()
+        Self::list_providers()
+            .iter()
+            .find(|&&provider| provider.get_name() == name)
+            .cloned()
     }
 
     fn get_name(&self) -> &str {
@@ -157,8 +148,8 @@ impl Config {
     /// 获取配置文件路径（根据操作系统）
     pub fn get_config_path() -> Result<PathBuf> {
         let config_dir = config_dir()
-                .context("无法获取配置目录")?
-                .join("git-automessage");
+            .context("无法获取配置目录")?
+            .join("git-automessage");
         if !config_dir.exists() {
             fs::create_dir_all(&config_dir)?;
         }
@@ -183,7 +174,7 @@ impl Config {
     /// 从配置文件加载配置
     pub fn load() -> Result<Self> {
         let config_path = Self::get_config_path()?;
-        
+
         if !config_path.exists() {
             let default_config = Self::default();
             default_config.save()?;
@@ -192,30 +183,29 @@ impl Config {
 
         let content = fs::read_to_string(&config_path)
             .with_context(|| format!("无法读取配置文件: {:?}", config_path))?;
-        
+
         let config: Config = serde_yaml::from_str(&content)
             .with_context(|| format!("无法解析YAML配置文件: {:?}", config_path))?;
-        
+
         Ok(config)
     }
 
     /// 保存配置到文件
     pub fn save(&self) -> Result<()> {
         let config_path = Self::get_config_path()?;
-        
-        let content = serde_yaml::to_string(self)
-            .context("无法序列化配置到YAML")?;
-        
+
+        let content = serde_yaml::to_string(self).context("无法序列化配置到YAML")?;
+
         fs::write(&config_path, content)
             .with_context(|| format!("无法写入配置文件: {:?}", config_path))?;
-        
+
         Ok(())
     }
 
     /// 创建示例配置文件
     pub fn create_config() -> Result<()> {
         let config_path = Self::get_config_path()?;
-        
+
         if config_path.exists() {
             println!("配置文件已存在: {:?}", config_path);
             return Ok(());
@@ -223,11 +213,11 @@ impl Config {
 
         let example_config = Self::default();
         example_config.save()?;
-        
+
         println!("已创建配置文件: {:?}", config_path);
         println!("！如需要使用个人Prompt，请编辑配置文件并设置prompt字段。");
         println!("！如需要更改LLM提供商，请编辑配置文件并修改llm相关内容。");
-        
+
         Ok(())
     }
 
@@ -238,15 +228,15 @@ impl Config {
                 if get_env_var("GAM_API_KEY").is_none() {
                     anyhow::bail!("API Key不能为空");
                 }
-            },
+            }
             "" => anyhow::bail!("API Key不能为空"),
             _ => {}
         }
-        
+
         if self.llm.base_url.is_empty() {
             anyhow::bail!("Base URL不能为空");
         }
-        
+
         if self.llm.model.is_empty() {
             anyhow::bail!("模型名称不能为空");
         }
@@ -258,7 +248,9 @@ impl Config {
 fn input_info(info: &str) -> String {
     let mut txt = String::new();
     println!("Please input {}:", info);
-    std::io::stdin().read_line(&mut txt).expect("failed to read line");
+    std::io::stdin()
+        .read_line(&mut txt)
+        .expect("failed to read line");
     txt.trim().to_string()
 }
 

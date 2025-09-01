@@ -43,8 +43,10 @@ impl GitRepo {
     pub fn get_staged_files(&self) -> Result<Vec<StagedFile>> {
         let mut diff_opts = DiffOptions::new();
         diff_opts.include_untracked(true);
-        
-        let diff = self.repo.diff_index_to_workdir(None, Some(&mut diff_opts))?;
+
+        let diff = self
+            .repo
+            .diff_index_to_workdir(None, Some(&mut diff_opts))?;
         let mut files = Vec::new();
 
         diff.foreach(
@@ -76,10 +78,12 @@ impl GitRepo {
     pub fn get_staged_diff(&self) -> Result<String> {
         let mut diff_opts = DiffOptions::new();
         diff_opts.include_untracked(true);
-        
-        let diff = self.repo.diff_index_to_workdir(None, Some(&mut diff_opts))?;
+
+        let diff = self
+            .repo
+            .diff_index_to_workdir(None, Some(&mut diff_opts))?;
         let mut diff_text = String::new();
-        
+
         diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
             let prefix = match line.origin() {
                 '+' => "+",
@@ -87,7 +91,11 @@ impl GitRepo {
                 ' ' => " ",
                 _ => "",
             };
-            diff_text.push_str(&format!("{}{}", prefix, std::str::from_utf8(line.content()).unwrap_or("")));
+            diff_text.push_str(&format!(
+                "{}{}",
+                prefix,
+                std::str::from_utf8(line.content()).unwrap_or("")
+            ));
             true
         })?;
 
@@ -97,22 +105,20 @@ impl GitRepo {
     pub fn get_commit_info(&self, reference: &str) -> Result<CommitInfo> {
         let obj = self.repo.revparse_single(reference)?;
         let commit = obj.peel_to_commit()?;
-        
+
         let sha = commit.id().to_string();
         let message = commit.message().unwrap_or("").to_string();
         let author = commit.author().name().unwrap_or("Unknown").to_string();
         let date = format!("{}", commit.time().seconds());
-        
+
         let tree = commit.tree()?;
         let parent = commit.parent(0).ok();
         let parent_tree = parent.as_ref().map(|p| p.tree().ok()).flatten();
-        
-        let diff = self.repo.diff_tree_to_tree(
-            parent_tree.as_ref(),
-            Some(&tree),
-            None
-        )?;
-        
+
+        let diff = self
+            .repo
+            .diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None)?;
+
         let mut files_changed = Vec::new();
         diff.foreach(
             &mut |delta, _| {
@@ -138,16 +144,16 @@ impl GitRepo {
     pub fn get_recent_commits(&self, count: usize) -> Result<Vec<CommitInfo>> {
         let mut revwalk = self.repo.revwalk()?;
         revwalk.push_head()?;
-        
+
         let mut commits = Vec::new();
         for oid in revwalk.take(count) {
             let oid = oid?;
             let _commit = self.repo.find_commit(oid)?;
-            
+
             let info = self.get_commit_info(&oid.to_string())?;
             commits.push(info);
         }
-        
+
         Ok(commits)
     }
 
@@ -177,9 +183,9 @@ impl GitRepo {
     pub fn create_commit(&self, message: &str) -> Result<()> {
         let signature = Signature::now("Git AutoMessage", "automessage@git")?;
         let tree = self.repo.find_tree(self.repo.index()?.write_tree()?)?;
-        
+
         let parent_commit = self.repo.head()?.peel_to_commit()?;
-        
+
         self.repo.commit(
             Some("HEAD"),
             &signature,
@@ -195,17 +201,11 @@ impl GitRepo {
     pub fn create_annotated_tag(&self, name: &str, message: &str, reference: &str) -> Result<()> {
         let obj = self.repo.revparse_single(reference)?;
         let commit = obj.peel_to_commit()?;
-        
+
         let signature = Signature::now("Git AutoMessage", "automessage@git")?;
-        
+
         let object = commit.as_object();
-        self.repo.tag(
-            name,
-            object,
-            &signature,
-            message,
-            false,
-        )?;
+        self.repo.tag(name, object, &signature, message, false)?;
 
         Ok(())
     }

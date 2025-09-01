@@ -11,8 +11,8 @@
 //
 // Library interface for git-automessage
 
-pub mod config;
-pub mod llm;
-pub mod git;
 pub mod changelog;
+pub mod config;
+pub mod git;
+pub mod llm;
 pub mod prompts;

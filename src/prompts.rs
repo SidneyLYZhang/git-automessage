@@ -11,8 +11,9 @@
 //
 // generate llm prompt
 
+use crate::config::Config;
 
-const GITMOJI_HELP: &str = "Use GitMoji convention to preface the commit. Here are some help to choose the right emoji (emoji, description): 
+static GITMOJI_HELP: &str = "Use GitMoji convention to preface the commit. Here are some help to choose the right emoji (emoji, description): 
 🐛, Fix a bug; 
 ✨, Introduce new features; 
 📝, Add or update documentation; 
@@ -24,7 +25,7 @@ const GITMOJI_HELP: &str = "Use GitMoji convention to preface the commit. Here a
 🌐, Internationalization and localization; 
 💡, Add or update comments in source code;";
 
-const EXTERNAL_GITMOJI_SPEC: &str = "🎨, Improve structure / format of the code;
+static EXTERNAL_GITMOJI_SPEC: &str = "🎨, Improve structure / format of the code;
 ⚡️, Improve performance; 
 🔥, Remove code or files; 
 🚑️, Critical hotfix; 
@@ -88,3 +89,42 @@ const EXTERNAL_GITMOJI_SPEC: &str = "🎨, Improve structure / format of the cod
 🧵, Add or update code related to multithreading or concurrency; 
 🦺, Add or update code related to validation.";
 
+static CONVENTIONAL_COMMIT_KEYWORDS: &str = "Do not preface the commit with anything, 
+except for the conventional commit keywords: fix, feat, build, chore, ci, docs, style, refactor, perf, test.";
+
+fn get_prompt_config() -> Config {
+    let config = Config::load().map_err(|e| {
+        eprintln!("Error loading config: {:?}", e);
+    }).unwrap();
+    config
+}
+
+pub struct Prompt {
+    prompt: String
+}
+
+impl Prompt {
+    pub fn from_str(prompt: &str) -> Self {
+        Self { prompt: prompt.to_string() }
+    }
+    pub fn new(prompt_type: &str) -> Self {
+        match prompt_type {
+            "tag" => Self::from_str("-"),
+            "commit" => Self::from_str(""),
+            "changelog" => Self::from_str(""),
+            _ => {
+                eprintln!("Invalid prompt type");
+                Self::from_str("")
+            },
+        }
+    }
+    pub fn get_prompt(&self) -> &str {
+        &self.prompt
+    }
+    // 私有方法 : tag massage prompt
+    fn tag_prompt() -> Self {
+        let config = get_prompt_config();
+        let emoji = config.emoji;
+        Self::from_str("")
+    }
+}

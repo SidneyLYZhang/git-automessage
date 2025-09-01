@@ -14,11 +14,11 @@
 use anyhow::Result;
 use clap::Parser;
 
+mod changelog;
 mod cli;
 mod config;
 mod git;
 mod llm;
-mod changelog;
 
 use cli::{Cli, Commands};
 
