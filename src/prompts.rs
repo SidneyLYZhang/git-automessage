@@ -109,22 +109,40 @@ impl Prompt {
     }
     pub fn new(prompt_type: &str) -> Self {
         match prompt_type {
-            "tag" => Self::from_str("-"),
-            "commit" => Self::from_str(""),
-            "changelog" => Self::from_str(""),
+            "tag" => Self::tag_prompt(),
+            "commit" => Self::commit_prompt(),
+            "changelog" => Self::changelog_prompt(),
             _ => {
-                eprintln!("Invalid prompt type");
-                Self::from_str("")
+                Self::default_prompt()
             },
         }
     }
     pub fn get_prompt(&self) -> &str {
         &self.prompt
     }
+    // 私有方法 ： default prompt
+    fn default_prompt() -> Self {
+        Self::from_str("")
+    }
     // 私有方法 : tag massage prompt
     fn tag_prompt() -> Self {
         let config = get_prompt_config();
         let emoji = config.emoji;
+        let mut prompt = "";
+        Self::from_str("")
+    }
+    // 私有方法 : commit massage prompt
+    fn commit_prompt() -> Self {
+        let config = get_prompt_config();
+        let emoji = config.emoji;
+        let mut prompt = "";
+        Self::from_str("")
+    }
+    // 私有方法 : changelog massage prompt
+    fn changelog_prompt() -> Self {
+        let config = get_prompt_config();
+        let emoji = config.emoji;
+        let mut prompt = "";
         Self::from_str("")
     }
 }
