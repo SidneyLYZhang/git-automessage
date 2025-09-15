@@ -13,11 +13,6 @@
 
 use crate::config::Config;
 
-static GITMOJI_HELP: &str = include_str!("../prompts/GITMOJI");
-
-static CONVENTIONAL_COMMIT_KEYWORDS: &str = "Do not preface the commit with anything, 
-except for the conventional commit keywords: fix, feat, build, chore, ci, docs, style, refactor, perf, test.";
-
 fn get_prompt_config() -> Config {
     let config = Config::load().map_err(|e| {
         eprintln!("Error loading config: {:?}", e);

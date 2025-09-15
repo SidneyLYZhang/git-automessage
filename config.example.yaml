@@ -14,7 +14,7 @@ llm:
   model: "gpt-3.5-turbo"
 
 # 用户界面语言
-language: "zh"
+language: "zh-CN"
 
 # 个性化prompt模板
 prompt: |
